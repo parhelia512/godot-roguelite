@@ -38,7 +38,7 @@ jobs:
       - name: Install scons
         run: |
           if [ "$RUNNER_OS" = "macOS" ]; then
-            brew install scons
+            brew install scons molten-vk
           else
             pip3 install scons
           fi
