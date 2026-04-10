@@ -36,7 +36,13 @@ jobs:
         uses: seanmiddleditch/gha-setup-ninja@master
 
       - name: Install scons
-        run: pip3 install scons
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            brew install scons
+          else
+            pip3 install scons
+          fi
+        shell: bash
 
       - name: Configure CMake
         run: >
