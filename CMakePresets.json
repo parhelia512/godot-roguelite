@@ -8,14 +8,6 @@
       "installDir": "${sourceDir}/.out/install/${presetName}",
       "binaryDir": "${sourceDir}/.out/build/${presetName}",
       "toolchainFile": "${sourceDir}/extern/vcpkg/scripts/buildsystems/vcpkg.cmake",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "toolset": {
-        "value": "host=x64",
-        "strategy": "external"
-      },
       "environment": {
         "NINJA_STATUS": "%p [%es] (%f/%t)  -"
       }
@@ -32,6 +24,14 @@
       "name": "msvc",
       "inherits": "default",
       "hidden": true,
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl",
@@ -73,12 +73,13 @@
       "hidden": true,
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++"
+        "CMAKE_CXX_COMPILER": "g++",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
       },
       "condition": {
-        "type": "notEquals",
+        "type": "equals",
         "lhs": "${hostSystemName}",
-        "rhs": "Windows"
+        "rhs": "Linux"
       }
     },
     {
@@ -109,6 +110,14 @@
       "name": "gcc-windows",
       "inherits": "default",
       "hidden": true,
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
@@ -121,7 +130,7 @@
       }
     },
     {
-      "displayName": "GCC Debug",
+      "displayName": "GCC Windows Debug",
       "name": "gcc-windows-debug",
       "inherits": "gcc-windows",
       "cacheVariables": {
@@ -129,7 +138,7 @@
       }
     },
     {
-      "displayName": "GCC Release",
+      "displayName": "GCC Windows Release",
       "name": "gcc-windows-release",
       "inherits": "gcc-windows",
       "cacheVariables": {
@@ -137,7 +146,7 @@
       }
     },
     {
-      "displayName": "GCC RelWithDebInfo",
+      "displayName": "GCC Windows RelWithDebInfo",
       "name": "gcc-windows-relwdebinfo",
       "inherits": "gcc-windows",
       "cacheVariables": {
@@ -150,12 +159,13 @@
       "hidden": true,
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++"
+        "CMAKE_CXX_COMPILER": "clang++",
+        "VCPKG_TARGET_TRIPLET": "x64-linux"
       },
       "condition": {
-        "type": "notEquals",
+        "type": "equals",
         "lhs": "${hostSystemName}",
-        "rhs": "Windows"
+        "rhs": "Linux"
       }
     },
     {
@@ -183,9 +193,56 @@
       }
     },
     {
+      "name": "clang-macos",
+      "inherits": "default",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "displayName": "Clang macOS Debug",
+      "name": "clang-macos-debug",
+      "inherits": "clang-macos",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "displayName": "Clang macOS Release",
+      "name": "clang-macos-release",
+      "inherits": "clang-macos",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "displayName": "Clang macOS RelWithDebInfo",
+      "name": "clang-macos-relwdebinfo",
+      "inherits": "clang-macos",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
       "name": "clang-windows",
       "inherits": "default",
       "hidden": true,
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
+      },
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
@@ -198,7 +255,7 @@
       }
     },
     {
-      "displayName": "Clang Debug",
+      "displayName": "Clang Windows Debug",
       "name": "clang-windows-debug",
       "inherits": "clang-windows",
       "cacheVariables": {
@@ -206,7 +263,7 @@
       }
     },
     {
-      "displayName": "Clang Release",
+      "displayName": "Clang Windows Release",
       "name": "clang-windows-release",
       "inherits": "clang-windows",
       "cacheVariables": {
@@ -214,7 +271,7 @@
       }
     },
     {
-      "displayName": "Clang RelWithDebInfo",
+      "displayName": "Clang Windows RelWithDebInfo",
       "name": "clang-windows-relwdebinfo",
       "inherits": "clang-windows",
       "cacheVariables": {

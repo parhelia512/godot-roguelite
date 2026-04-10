@@ -27,10 +27,10 @@ endif()
 # if the sources list is empty, the submodule probably
 # hasn't been initialized or updated yet.
 if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-cpp/src")
-    message(NOTICE "godot-cpp bingings source not found")
+    message(NOTICE "godot-cpp bindings source not found")
     message(NOTICE "initializing/updating the godot-cpp submodule...")
 
-    # update the c++ bingings submodule to populate it with
+    # update the c++ bindings submodule to populate it with
     # the necessary source for the gdextension library
     execute_process(
         COMMAND git submodule update --init extern/godot-cpp
@@ -44,14 +44,19 @@ endif()
 # =======================================================================
 
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" host_os)
-set(cpu_arch "x86_64")
+
+# Detect CPU architecture portably across all platforms
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    set(cpu_arch "arm64")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+    set(cpu_arch "x86_64")
+else()
+    set(cpu_arch "${CMAKE_SYSTEM_PROCESSOR}")
+endif()
 
 # define variable to be used in the engine build when specifying platform.
 set(host_os_engine "${host_os}")
 if (APPLE)
-    if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64")
-            set(cpu_arch "arm64")
-    endif()
     # ${CMAKE_SYSTEM_NAME} returns Darwin, but the scons platform name will be macos
     set(host_os_engine "macos")
 elseif(UNIX)
@@ -95,8 +100,7 @@ if(NOT EXISTS "${godot_debug_editor_executable}")
           use_lto=no
     )
 
-    set(GODOT_ENGINE_CLEAN_BUILD OFF)
-    if (GODOT_ENGINE_CLEAN_BUILD MATCHES ON)
+    if(GODOT_ENGINE_CLEAN_BUILD)
         message(STATUS "Invoking scons clean: ${SCONS_COMMAND} --clean")
 
         execute_process(
@@ -107,7 +111,7 @@ if(NOT EXISTS "${godot_debug_editor_executable}")
     endif()
 
     message(STATUS "Invoking scons build: ${SCONS_COMMAND}")
-    # this build should only ever need to be run once (unless the enging debug binaries
+    # this build should only ever need to be run once (unless the engine debug binaries
     # are deleted or you want to change the build configuration/command invoked below).
     execute_process(
         COMMAND ${SCONS_COMMAND}
@@ -116,7 +120,7 @@ if(NOT EXISTS "${godot_debug_editor_executable}")
     )
 
     # not necessary, the temp file in here just confuses Visual Studio
-    file(REMOVE_RECURSE "${CMAKE_CURRENT_SOURCE_DIR}}/extern/godot-engine/.sconf_temp")
+    file(REMOVE_RECURSE "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-engine/.sconf_temp")
 
     if(NOT EXISTS "${godot_debug_editor_executable}")
         message(FATAL_ERROR "Couldn't find godot debug executable after scons build: ${godot_debug_editor_executable}")
@@ -150,12 +154,21 @@ file(GLOB_RECURSE godot_engine_sources CONFIGURE_DEPENDS
 # source code using features like "go do definition", or typical tooltips.
 add_library(godot_engine EXCLUDE_FROM_ALL ${godot_engine_sources})
 
+# Select the correct platform include directory for the current OS.
+if(WIN32)
+    set(_godot_platform_dir "platform/windows")
+elseif(APPLE)
+    set(_godot_platform_dir "platform/macos")
+else()
+    set(_godot_platform_dir "platform/linuxbsd")
+endif()
+
 # this is just a handful of additional include directories used by the engine.
 # this isn't a complete list, I just add them as needed whenever I venture into
 # code where the IDE can't find certain header files during engine source browsing.
 target_include_directories(godot_engine PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-engine"
-    "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-engine/platform/windows"
+    "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-engine/${_godot_platform_dir}"
     "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-engine/thirdparty/zlib"
     "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-engine/thirdparty/vulkan"
     "${CMAKE_CURRENT_SOURCE_DIR}/extern/godot-engine/thirdparty/vulkan/include"
@@ -169,19 +182,26 @@ target_include_directories(godot_engine PUBLIC
 
 # define a bunch of the same symbol definitions
 # used when by the scons engine build. These build
-# flags can differen based on the engine's build for
-# you system. Update as needed for your setup.
+# flags can differ based on the engine's build for
+# your system. Update as needed for your setup.
 target_compile_definitions(godot_engine PUBLIC
     $<$<CONFIG:Debug>:
         DEBUG_ENABLED
         DEBUG_METHODS_ENABLED
         DEV_ENABLED
     >
-    $<$<BOOL:UNIX>:
+    $<$<PLATFORM_ID:Linux>:
         UNIX_ENABLED
         VK_USE_PLATFORM_XLIB_KHR
     >
-    $<$<BOOL:WIN32>:
+    $<$<PLATFORM_ID:Darwin>:
+        MACOS_ENABLED
+        UNIX_ENABLED
+        COREAUDIO_ENABLED
+        COREMIDI_ENABLED
+        VK_USE_PLATFORM_METAL_EXT
+    >
+    $<$<PLATFORM_ID:Windows>:
         WINDOWS_ENABLED
         WASAPI_ENABLED
         WINMIDI_ENABLED
@@ -190,7 +210,7 @@ target_compile_definitions(godot_engine PUBLIC
         WIN32
         VK_USE_PLATFORM_WIN32_KHR
         _SCRT_STARTUP_WINMAIN=1
-        $<$<BOOL:MSVC>:
+        $<$<CXX_COMPILER_ID:MSVC>:
             MSVC
         >
     >

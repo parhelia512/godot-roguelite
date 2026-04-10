@@ -152,13 +152,13 @@ namespace rl::inline utils
                             signal_params = {
                                 variant_traits<decltype(arg)>::type_info::get_class_info()...
                             };
+                            godot::ClassDB::add_signal(
+                                class_name.data(),
+                                godot::MethodInfo(
+                                    signal_name.data(),
+                                    variant_traits<decltype(arg)>::type_info::get_class_info()...));
                         },
                         signal_args);
-
-                    godot::ClassDB::add_signal(
-                        class_name.data(),
-                        godot::MethodInfo(signal_name.data(),
-                                          std::forward<decltype(signal_params)>(signal_params)));
                 }
 
                 runtime_assert(signal_params.size() == arg_count);

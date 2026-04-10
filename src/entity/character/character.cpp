@@ -37,7 +37,6 @@ namespace rl
     void Character::_ready()
     {
         this->add_child(m_camera);
-        this->add_child(m_character_controller);
 
         m_firing_point = gdcast<godot::Marker2D>(
             this->find_child(name::character::firing_pt, true, false));
@@ -48,6 +47,8 @@ namespace rl
 
         if (m_character_controller != nullptr)
         {
+            this->add_child(m_character_controller);
+
             signal<event::character_move>::connect<CharacterController>(m_character_controller) <=>
                 signal_callback(this, on_character_movement);
 

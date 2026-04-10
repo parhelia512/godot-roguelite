@@ -35,23 +35,28 @@ namespace rl::inline ui
                 [[fallthrough]];
             case Node::NOTIFICATION_UNPARENTED:
             {
-                console::get()->clear_context();
-                console::get()->stop_logging();
+                if (auto* c = console::get())
+                {
+                    c->clear_context();
+                    c->stop_logging();
+                }
                 break;
             }
             case Control::NOTIFICATION_MOUSE_ENTER:
             {
-                m_level->activate(true);
+                if (m_level != nullptr)
+                    m_level->activate(true);
                 break;
             }
             case Control::NOTIFICATION_MOUSE_EXIT:
             {
-                m_level->activate(false);
+                if (m_level != nullptr)
+                    m_level->activate(false);
                 break;
             }
         }
 
-        auto console{ console::get() };
-        console->print("notification: {}", notification);
+        if (auto* c = console::get())
+            c->print("notification: {}", notification);
     }
 }

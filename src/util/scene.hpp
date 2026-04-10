@@ -164,7 +164,7 @@ namespace rl::inline utils
                     if (initialized)
                     {
                         auto error = saver::get()->save(m_packed_resource, resource_save_path);
-                        assertion(error != godot::Error::OK, "Packed resource save failed.");
+                        assertion(error == godot::Error::OK, "Packed resource save failed.");
                     }
                 }
 

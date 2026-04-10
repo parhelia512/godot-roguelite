@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Unlicense
 
 # See: https://crascit.com/2016/04/09/using-ccache-with-cmake/
-find_program( CCACHE_PROGRAM ccache )
+find_program( CCACHE_PROGRAM ccache sccache )
 
 if ( CCACHE_PROGRAM )
     # get version information

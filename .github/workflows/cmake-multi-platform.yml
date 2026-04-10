@@ -3,25 +3,49 @@ name: GDExtension CMake
 on: [push, pull_request]
 
 jobs:
-  build-linux:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v3
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: Linux GCC
+            compiler_c: gcc
+            compiler_cxx: g++
+            build_type: Debug
+          - os: windows-latest
+            name: Windows MSVC
+            compiler_c: cl
+            compiler_cxx: cl
+            build_type: Debug
+          - os: macos-latest
+            name: macOS Clang
+            compiler_c: clang
+            compiler_cxx: clang++
+            build_type: Debug
 
-        # linux / gcc build
-      - name: '[linux | submodule sync]'
-        run: cd ${{ github.workspace }} && git submodule deinit --all --force && git submodule update --init --recursive 
-      - name: '[linux | gcc] => cmake - delete cache'
-        run: rm -rf ${{ github.workspace }}/.out/*
-      - name: '[linux | gcc] => cmake - configure'
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Install scons
+        run: pip3 install scons
+
+      - name: Configure CMake
         run: >
           cmake -B ${{ github.workspace }}/.out
-          -DCMAKE_CXX_COMPILER=g++
-          -DCMAKE_C_COMPILER=gcc
-          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler_cxx }}
+          -DCMAKE_C_COMPILER=${{ matrix.compiler_c }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -S ${{ github.workspace }}
           -G Ninja
-      - name: '[linux | gcc] => cmake - clean'
-        run: cmake --build ${{ github.workspace }}/.out --config Debug --target clean --parallel 48
-      - name: '[linux | gcc] => cmake - build'
-        run: cmake --build ${{ github.workspace }}/.out --config Debug --target roguelite --parallel 48
+
+      - name: Build
+        run: cmake --build ${{ github.workspace }}/.out --config ${{ matrix.build_type }} --target roguelite --parallel

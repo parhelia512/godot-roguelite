@@ -13,6 +13,7 @@
 
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/rich_text_label.hpp>
+#include <godot_cpp/variant/string.hpp>
 
 namespace rl
 {
@@ -40,12 +41,12 @@ namespace rl
 
         void set_context(TContext* context)
         {
-            m_gui_console = context;
+            m_gui_console.store(context, std::memory_order_release);
         }
 
         void clear_context()
         {
-            m_gui_console = nullptr;
+            m_gui_console.store(nullptr, std::memory_order_release);
         }
 
         void stop_logging()
@@ -61,20 +62,23 @@ namespace rl
             auto stderr_sink{ std::make_shared<spdlog::sinks::stderr_color_sink_mt>() };
             auto callbk_sink{ std::make_shared<spdlog::sinks::callback_sink_mt>(
                 [this](const spdlog::details::log_msg& msg) {
-                    if (!m_stop.load(std::memory_order_relaxed))
-                    {
-                        if (m_gui_console == nullptr)
-                            return;
+                    if (m_stop.load(std::memory_order_relaxed))
+                        return;
 
-                        using duration_t = std::chrono::duration<double>;
-                        const duration_t elapsed{ clock_t::now() - m_start_time };
+                    TContext* ctx = m_gui_console.load(std::memory_order_acquire);
+                    if (ctx == nullptr)
+                        return;
 
-                        m_gui_console->append_text(
-                            fmt::format("[color=gray]{:5} [{:>7.2}] [b]=>[/b] {}[/color]\n",
-                                        m_line_num.fetch_add(1, std::memory_order_relaxed), elapsed,
-                                        msg.payload)
-                                .c_str());
-                    }
+                    using duration_t = std::chrono::duration<double>;
+                    const duration_t elapsed{ clock_t::now() - m_start_time };
+
+                    godot::String text = fmt::format(
+                                             "[color=gray]{:5} [{:>7.2}] [b]=>[/b] {}[/color]\n",
+                                             m_line_num.fetch_add(1, std::memory_order_relaxed),
+                                             elapsed, msg.payload)
+                                             .c_str();
+
+                    ctx->call_deferred("append_text", text);
                 }) };
 
             stderr_sink->set_level(spdlog::level::err);
@@ -82,7 +86,7 @@ namespace rl
             callbk_sink->set_level(spdlog::level::debug);
 
             m_logger = std::unique_ptr<spdlog::logger>(
-                new spdlog::logger{ "custom_callback_logger",
+                new spdlog::logger{ { "custom_callback_logger" },
                                     { stdout_sink, stderr_sink, callbk_sink } });
 
             using namespace std::chrono_literals;
@@ -104,7 +108,7 @@ namespace rl
         std::unique_ptr<spdlog::logger> m_logger{ nullptr };
         std::atomic<bool> m_stop{ false };
         std::atomic<uint32_t> m_line_num{ 0 };
-        TContext* m_gui_console{ nullptr };
+        std::atomic<TContext*> m_gui_console{ nullptr };
 
         using clock_t = std::chrono::high_resolution_clock;
         const clock_t::time_point m_start_time{ clock_t::now() };
