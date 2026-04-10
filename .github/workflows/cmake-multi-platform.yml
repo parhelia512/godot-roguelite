@@ -35,6 +35,10 @@ jobs:
       - name: Install Ninja
         uses: seanmiddleditch/gha-setup-ninja@master
 
+      - name: Setup MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Install scons
         run: |
           if [ "$RUNNER_OS" = "macOS" ]; then
