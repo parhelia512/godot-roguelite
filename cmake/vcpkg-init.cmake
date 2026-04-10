@@ -24,7 +24,14 @@ endif()
 # VCPKG bootstrap / initialization.
 # =======================================================================
 
-set(VCPKG_PROGRAM "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/vcpkg${CMAKE_EXECUTABLE_SUFFIX}")
+# CMAKE_EXECUTABLE_SUFFIX isn't available yet because this runs
+# before project(), so detect the executable suffix directly.
+if(WIN32)
+    set(_vcpkg_exe_suffix ".exe")
+else()
+    set(_vcpkg_exe_suffix "")
+endif()
+set(VCPKG_PROGRAM "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/vcpkg${_vcpkg_exe_suffix}")
 
 if(EXISTS "${VCPKG_PROGRAM}")
     message(NOTICE "Found VCPKG Executable: ${VCPKG_PROGRAM}")
