@@ -1,4 +1,4 @@
-# Godot 4.3 GDExtension C++ Prototype
+# Godot 4.5 GDExtension C++ Prototype
 
 This project is a rough prototype focusing on understanding how to implementa majority of a game's core logic/scripting in C++ using GDExtension. Everything is done in the code aside from UI/dialog/menu design, and scene file generation.
 
